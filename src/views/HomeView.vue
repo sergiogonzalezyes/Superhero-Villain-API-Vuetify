@@ -1,8 +1,13 @@
 <template>
-  <div>
+  <div sm="12"
+  md="6"
+  lg="4">
     <v-app-bar
         color="teal-darken-4"
         image="https://www.comicbasics.com/wp-content/uploads/2020/08/The-Top-10-Greatest-Superheroes-Without-Superpowers-In-Comics-Today.jpg"
+        sm="12"
+        md="6"
+        lg="4"
       >
         <template v-slot:image>
           <v-img
@@ -18,9 +23,17 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn icon>
-          <v-icon>mdi-magnify</v-icon>
-        </v-btn>
+        <v-text-field
+        loading
+        density="compact"
+        variant="solo"
+        label="Search for Superhero or Villain"
+        append-inner-icon="mdi-magnify"
+        single-line
+        hide-details
+        @click:append-inner="searchHero"
+        v-model="searchInput"
+      ></v-text-field>
 
         <v-btn icon>
           <v-icon>mdi-heart</v-icon>
@@ -37,7 +50,9 @@
           <v-col
             v-for="hero in heroes"
             :key="hero.id"
-            cols="4"
+            sm="12"
+            md="6"
+            lg="4"
           >
             <v-card class="bg-grey-lighten-3">
               <v-img :src="hero.image.url" height="300px"></v-img>
@@ -54,6 +69,10 @@
           :length="15"
           :total-visible="4"
           @next="next"
+          @prev="previous"
+          sm="12"
+          md="6"
+          lg="4"
         ></v-pagination>
       </div>
     </v-main>
@@ -62,13 +81,18 @@
 
 <script>
 import axios from 'axios';
+import { useHeroStore } from '@/store/store';
+
+const heroStore = useHeroStore();
 
 export default {
+  name: 'HomeView',
   data() {
     return {
       pageAmount: 15,
       heroes: [],
-      page: 1
+      page: 1,
+      searchInput: '',
     }
   },
   created() {
@@ -84,21 +108,40 @@ export default {
     requests.push(axios.get(`http://localhost:8080/api/103398715680585/${i}`));
   }
 
+  console.log(requests)
+
   Promise.all(requests)
     .then(responses => {
       const heroes = responses.map(response => response.data);
-      console.log(heroes) // Extract the data from each response
+      // console.log(heroes) // Extract the data from each response
       this.heroes = heroes;
     })
     .catch(error => {
       console.error(error);
     });
-},
-
+    },
 
     next() {
-      this.page++;
       this.getHeroes(this.page);
+    },
+
+    previous() {
+      console.log("previous clicked")
+      this.getHeroes(this.page);
+    },
+
+    searchHero() {    
+      const name = this.searchInput.toUpperCase();
+      if (name === name.toLowerCase()) {
+        alert("Please enter a valid superhero or villain name")
+      }
+      else {
+        axios.get(`http://localhost:8080/api/103398715680585/search/${name}`).then(response => {
+          const searchedHero = response.data.results;
+          console.log(searchedHero)
+          heroStore.setHero(searchedHero);
+        })
+      }
     }
   }
 }
